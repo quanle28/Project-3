@@ -91,11 +91,12 @@ public class BuildingEntity extends BaseEntity {
                 inverseJoinColumns = @JoinColumn(name = "staffid", nullable = false))
     private List<UserEntity> userEntities = new ArrayList<>();
 
-    @OneToMany(mappedBy = "building", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "building", fetch = FetchType.LAZY, cascade =  {CascadeType.PERSIST, CascadeType.MERGE}
+                                                                            , orphanRemoval =  true)
     private List<RentAreaEntity> rentarea = new ArrayList<>();
 
-    @OneToMany(mappedBy = "buildingId", fetch = FetchType.LAZY)
-    private List<AssignBuildingEntity> assignBuilding = new ArrayList<>();
+//    @OneToMany(mappedBy = "buildingId", fetch = FetchType.LAZY)
+//    private List<AssignBuildingEntity> assignBuilding = new ArrayList<>();
 
     public String getImage() {
         return image;
@@ -103,14 +104,6 @@ public class BuildingEntity extends BaseEntity {
 
     public void setImage(String image) {
         this.image = image;
-    }
-
-    public List<AssignBuildingEntity> getAssignBuilding() {
-        return assignBuilding;
-    }
-
-    public void setAssignBuilding(List<AssignBuildingEntity> assignBuilding) {
-        this.assignBuilding = assignBuilding;
     }
 
     public List<RentAreaEntity> getRentarea() {

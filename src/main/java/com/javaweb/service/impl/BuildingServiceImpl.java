@@ -1,7 +1,6 @@
 package com.javaweb.service.impl;
 
 import com.javaweb.converter.BuildingDTOConverter;
-import com.javaweb.entity.AssignBuildingEntity;
 import com.javaweb.entity.BuildingEntity;
 import com.javaweb.entity.RentAreaEntity;
 import com.javaweb.entity.UserEntity;
@@ -11,9 +10,8 @@ import com.javaweb.model.dto.EditBuildingDTO;
 import com.javaweb.model.response.BuildingSearchResponse;
 import com.javaweb.model.response.ResponseDTO;
 import com.javaweb.model.response.StaffResponseDTO;
-import com.javaweb.repository.AssignmentBuildingRepository;
 import com.javaweb.repository.BuildingRepository;
-import com.javaweb.repository.RentAreaRopository;
+import com.javaweb.repository.RentAreaRepository;
 import com.javaweb.repository.UserRepository;
 import com.javaweb.service.BuildingService;
 import com.javaweb.utils.UploadFileUtils;
@@ -23,12 +21,9 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.io.File;
-import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Base64;
-import java.util.stream.Collectors;
 
 @Service
 public class BuildingServiceImpl implements BuildingService {
@@ -45,10 +40,7 @@ public class BuildingServiceImpl implements BuildingService {
     private ModelMapper modelMapper;
 
     @Autowired
-    private RentAreaRopository rentAreaRepository;
-
-    @Autowired
-    private AssignmentBuildingRepository assignmentBuildingRepository;
+    private RentAreaRepository rentAreaRepository;
 
     @Autowired
     private UploadFileUtils uploadFileUtils;
@@ -92,29 +84,18 @@ public class BuildingServiceImpl implements BuildingService {
     public void addOrUpdateBuilding(EditBuildingDTO editBuildingDTO) {
         BuildingEntity buildingEntity;
         // Nếu có ID, cập nhật tòa nhà hiện tại
-        if (editBuildingDTO.getId() != null) {
+        if (editBuildingDTO.getId() != null && editBuildingDTO.getImage() != null) {
             buildingEntity = buildingRepository.findById(editBuildingDTO.getId()).get();
-            List<RentAreaEntity> rentAll = rentAreaRepository.findByBuildingId(editBuildingDTO.getId());
-            for (RentAreaEntity rentAreaEntity : rentAll) {
-                rentAreaRepository.delete(rentAreaEntity);
-            }
             modelMapper.map(editBuildingDTO, buildingEntity);
         } else {
             // Nếu không có ID, tạo mới tòa nhà
             buildingEntity = modelMapper.map(editBuildingDTO, BuildingEntity.class);
         }
+        List<RentAreaEntity> areaEntityList = buildingDTOConverter.addRentAreaConverter(editBuildingDTO, buildingEntity);
+        buildingEntity.setRentarea(areaEntityList);
         saveThumbnail(editBuildingDTO, buildingEntity);
         buildingRepository.save(buildingEntity);
-        // Xử lý khu vực cho thuê
-        if (editBuildingDTO.getRentArea() != null && !editBuildingDTO.getRentArea().isEmpty()) {
-            String[] rentAreas = editBuildingDTO.getRentArea().trim().split(",");
-            for (String rentArea : rentAreas) {
-                RentAreaEntity rentAreaEntity = new RentAreaEntity();
-                rentAreaEntity.setValue(rentArea);
-                rentAreaEntity.setBuilding(buildingEntity);
-                rentAreaRepository.save(rentAreaEntity);
-            }
-        }
+
     }
 
     private void saveThumbnail(EditBuildingDTO editBuildingDTO, BuildingEntity buildingEntity) {
@@ -140,55 +121,24 @@ public class BuildingServiceImpl implements BuildingService {
     @Override
     @Transactional
     public void deleteBuilding(List<Long> ids) {
-        if (ids != null && !ids.isEmpty()) {
-            ids.forEach(id -> {
-                    rentAreaRepository.deleteByBuildingId(id);
-                    assignmentBuildingRepository.deleteByBuildingIdId(id);
-                    buildingRepository.deleteById(id);
-            });
-        }
+        buildingRepository.deleteByIdIn(ids);
     }
 
     @Override
     @Transactional
     public void updateAssignment(AssignmentBuildingDTO assignmentBuildingDTO) {
-        List<Long> assignmentId = assignmentBuildingDTO.getStaffs();
-        List<AssignBuildingEntity> listAssignment = new ArrayList<>();
-        for (Long id : assignmentId) {
-            AssignBuildingEntity assignBuildingEntity = new AssignBuildingEntity();
-            UserEntity user = userRepository.findById(id).get();
-            assignBuildingEntity.setUserId(user);
-            BuildingEntity buildingEntity = buildingRepository.findById(assignmentBuildingDTO.getBuildingId()).get();
-            assignBuildingEntity.setBuildingId(buildingEntity);
-            listAssignment.add(assignBuildingEntity);
+        BuildingEntity buildingEntity = buildingRepository.findById(assignmentBuildingDTO.getBuildingId()).get();
+        List<UserEntity> userEntityList = new ArrayList<>();
+        for (Long it : assignmentBuildingDTO.getStaffs()){
+            userEntityList.add(userRepository.findById(it).get());
         }
-        assignmentBuildingRepository.saveAll(listAssignment);
-
-    }
-
-    @Override
-    @Transactional
-    public void deleteAssignment(AssignmentBuildingDTO assignmentBuildingDTO) {
-        List<AssignBuildingEntity> assignBuildingEntityList = assignmentBuildingRepository.findByBuildingId(assignmentBuildingDTO.getBuildingId());
-        for (AssignBuildingEntity assignBuildingEntity : assignBuildingEntityList) {
-            assignmentBuildingRepository.delete(assignBuildingEntity);
-        }
-//        assignBuildingEntities.forEach(assignmentBuildingRepository::delete);
+        buildingEntity.setUserEntities(userEntityList);
     }
 
     @Override
     public EditBuildingDTO toEditBuildingDTO(Long id) {
         BuildingEntity buildingEntity = buildingRepository.findById(id).get();
-        EditBuildingDTO editBuildingDTO = modelMapper.map(buildingEntity, EditBuildingDTO.class);
-        String typecode = buildingEntity.getTypeCode();  // Assuming 'getTypecode()' returns a string
-        List<String> typecodeList = Arrays.stream(typecode.replaceAll("[\\[\\]]", "").split(", "))
-                                            .collect(Collectors.toList());
-        editBuildingDTO.setTypeCode(typecodeList);
-        List<RentAreaEntity> rentAreaEntityList = rentAreaRepository.findByBuildingId(id);
-        String rentResult = rentAreaEntityList.stream().map(it -> it.getValue().toString()).collect(Collectors.joining(", "));
-        editBuildingDTO.setRentArea(rentResult);
-        editBuildingDTO.setImage(buildingEntity.getImage());
-        return editBuildingDTO;
+        return buildingDTOConverter.getEditBuildingDTO(buildingEntity, id);
     }
 }
 

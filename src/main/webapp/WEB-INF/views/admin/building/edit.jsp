@@ -322,7 +322,8 @@
             dataType: "JSON",
             success: function(response){
                 $('#loading_image').hide();
-                window.location.href = "<c:url  value ="/admin/building-edit?message=success"/>";
+                confirm("LƯU TÒA NHÀ THÀNH CÔNG!")
+                window.location.href = "<c:url  value ="/admin/building-list"/>";
             },
             error: function(response){
                 $('#loading_image').hide();

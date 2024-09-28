@@ -356,7 +356,7 @@
                 return $(this).val();
             }).get();
             data['staffs'] = staffs;
-            if (data['staffs'] != ""){
+            if (data['staffs'] !== ""){
                 assignment(data);
             }
         });
@@ -367,14 +367,15 @@
             url: "${buildingAPI}/" + 'assignment',
             data: JSON.stringify(data),
             contentType: "application/json",
-            dataType: "JSON",
-            success: function(reponse){
+            success: function(response){
                 console.log("Success");
+                confirm("GIAO THÀNH CÔNG!");
+                window.location.href = "<c:url  value ="/admin/building-list"/>";
             },
-            error: function(reponse){
+            error: function(response){
                 console.info("Giao không thành công");
-                window.location.href = "<c:url value="/admin/building-list?message=error"/>";
-                console.log(reponse);
+                confirm("GIAO KHÔNG THÀNH CÔNG!");
+                console.log(response.status);
             }
         });
         }
@@ -394,7 +395,12 @@
             var buildingIds = $('#deleteListBuilding').find('tbody input[type = checkbox]:checked').map(function (){
                 return $(this).val();
             }).get();
-            deleteBuildings(buildingIds);
+
+            if (buildingIds.length > 0) {
+                deleteBuildings(buildingIds);
+            } else {
+                alert("Xóa chưa thành công");
+            }
         });
 
         function deleteBuildings(data){
@@ -404,8 +410,15 @@
             data: JSON.stringify(data),
             contentType: "application/json",
             success: function(response){
+                if (data.length > 1) {
+                    $.each(data, function (index, id) {
+                    $('#deleteId-' + id).closest('tr').remove();
+                });
+                } else {
+                    $('#deleteId-' + data[0]).closest('tr').remove();
+                }
+                confirm("Xoá thành công");
                 console.log("Success");
-                $('#deleteId-'+data).closest('tr').remove();
                 console.log(response);
             },
             error: function(response){
@@ -415,7 +428,6 @@
             }
         });
         }
-
 
     </script>
 </body>

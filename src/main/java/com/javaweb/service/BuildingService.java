@@ -19,7 +19,5 @@ public interface BuildingService {
 
     void updateAssignment(AssignmentBuildingDTO assignmentBuildingDTO);
 
-    void deleteAssignment(AssignmentBuildingDTO assignmentBuildingDTO);
-
     EditBuildingDTO toEditBuildingDTO(Long id);
 }
