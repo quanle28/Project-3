@@ -1,6 +1,8 @@
 package com.javaweb.model.dto;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class EditBuildingDTO extends AbstractDTO{
     private String name;
@@ -29,6 +31,42 @@ public class EditBuildingDTO extends AbstractDTO{
     private Long brokerageFee;
     private List<String> typeCode;
     private String note;
+    private String image;
+    private String imageBase64;
+    private String imageName;
+    private Map<String,String> buildingDTOs = new HashMap<>();
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    public String getImageBase64() {
+        return imageBase64;
+    }
+
+    public void setImageBase64(String imageBase64) {
+        this.imageBase64 = imageBase64;
+    }
+
+    public String getImageName() {
+        return imageName;
+    }
+
+    public void setImageName(String imageName) {
+        this.imageName = imageName;
+    }
+
+    public Map<String, String> getBuildingDTOs() {
+        return buildingDTOs;
+    }
+
+    public void setBuildingDTOs(Map<String, String> buildingDTOs) {
+        this.buildingDTOs = buildingDTOs;
+    }
 
     public String getName() {
         return name;

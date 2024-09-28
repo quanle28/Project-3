@@ -14,7 +14,7 @@ public class UploadFileUtils {
         path = "C://home/office" + path;
         File file = new File(StringUtils.substringBeforeLast(path, "/"));
         if (!file.exists()) {
-            file.mkdir();
+            file.mkdirs();
         }
         try (FileOutputStream fop = new FileOutputStream(path)) {
             fop.write(bytes);

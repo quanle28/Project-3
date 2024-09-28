@@ -82,6 +82,9 @@ public class BuildingEntity extends BaseEntity {
     @Column(name = "note")
     private String note;
 
+    @Column(name = "avatar")
+    private String image;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "assignmentbuilding",
                 joinColumns = @JoinColumn(name = "buildingid", nullable = false),
@@ -93,6 +96,14 @@ public class BuildingEntity extends BaseEntity {
 
     @OneToMany(mappedBy = "buildingId", fetch = FetchType.LAZY)
     private List<AssignBuildingEntity> assignBuilding = new ArrayList<>();
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
 
     public List<AssignBuildingEntity> getAssignBuilding() {
         return assignBuilding;

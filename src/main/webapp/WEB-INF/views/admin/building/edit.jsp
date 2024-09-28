@@ -243,15 +243,31 @@
                                 </div>
 
                                 <div class="form-group">
+                                    <label class="col-sm-3 no-padding-right">Hình đại diện</label>
+                                    <input class="col-sm-3 no-padding-right"  type="file" id="uploadImage" />
+                                    <div class="col-sm-9">
+                                        <c:if test="${not empty editBuilding.image}">
+                                            <c:set var="imagePath" value="/repository${editBuilding.image}"/>
+                                            <img src="${imagePath}" id="viewImage" width="300px" height="300px" style="margin-top: 50px">
+                                        </c:if>
+                                        <c:if test="${empty editBuilding.image}">
+                                            <img src="/admin/image/default.png" id="viewImage" width="300px" height="300px">
+                                        </c:if>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
                                     <label class="col-xs-3"></label>
                                     <div class="col-xs-9">
                                         <c:if test="${not empty editBuilding.id}">
                                             <button type="button" class="btn btn-primary" title="Sửa tòa nhà" id="btnAddOrUpdateBuilding">Sửa tòa nhà</button>
                                             <button type="button" class="btn btn-primary" title="Hủy thao tác" id="btnCancel">Hủy thao tác</button>
+                                            <img src="/img/loading.gif" style="display: none; height: 100px" id="loading_image">
                                         </c:if>
                                         <c:if test="${empty editBuilding.id}">
                                             <button type="button" class="btn btn-primary" title="Thêm tòa nhà" id="btnAddOrUpdateBuilding">Thêm tòa nhà</button>
                                             <button type="button" class="btn btn-primary" title="Hủy thao tác" id="btnCancel">Hủy thao tác</button>
+                                            <img src="/img/loading.gif" style="display: none; height: 100px" id="loading_image">
                                         </c:if>
                                     </div>
                                 </div>
@@ -267,23 +283,33 @@
 </div><!-- /.main-container -->
 
 <script>
+    var imageBase64 = '';
+    var imageName = '';
     $('#btnAddOrUpdateBuilding').click(function(){
         var data = {};
         var typeCode = [];
         var formData = $('#listForm').serializeArray();
         $.each(formData, function(i, v){
-            if (v.name != 'typeCode') {
-                data[""+v.name+""] = v.value;
+            if('' !== v.value && null != v.value){
+                if (v.name != 'typeCode') {
+                    data[""+v.name+""] = v.value;
+                }
+                else{
+                    typeCode.push(v.value);
+                }
             }
-            else{
-                typeCode.push(v.value);
+            if ('' !== imageBase64) {
+                data['imageBase64'] = imageBase64;
+                data['imageName'] = imageName;
             }
+
         });
         data['typeCode'] = typeCode;
-        if (typeCode != ''){
+        if (typeCode != '' && data.name != ''){
+            $('#loading_image').show();
             addOrUpdateBuilding(data);
         }else{
-            window.location.href = "<c:url value="/admin/building-edit?typeCode=required"/>";
+            window.location.href = "<c:url value="/admin/building-edit?name=required&typeCode=required"/>";
         }
 
     });
@@ -294,19 +320,41 @@
             data: JSON.stringify(data),
             contentType: "application/json",
             dataType: "JSON",
-            success: function(respond){
-                console.log("Success");
+            success: function(response){
+                $('#loading_image').hide();
+                window.location.href = "<c:url  value ="/admin/building-edit?message=success"/>";
             },
-            error: function(respond){
-                console.log("OK");
-                console.log(respond);
-            }
+            error: function(response){
+                $('#loading_image').hide();
+                window.location.href = "<c:url  value ="/admin/building-edit?message=error"/>";            }
         });
     }
 
     $('#btnCancel').click(function (){
         window.location.href = "<c:url value="/admin/building-list"/>";
     });
+
+     $('#uploadImage').change(function (event) {
+        var reader = new FileReader();
+        var file = $(this)[0].files[0];
+        reader.onload = function(e){
+            imageBase64 = e.target.result;
+            imageName = file.name; // ten hinh khong dau, khoang cach. vd: a-b-c
+        };
+        reader.readAsDataURL(file);
+        openImage(this, "viewImage");
+    });
+
+    function openImage(input, imageView) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $('#' +imageView).attr('src', reader.result);
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
 </script>
 </body>
 </html>

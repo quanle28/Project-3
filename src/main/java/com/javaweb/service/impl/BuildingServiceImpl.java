@@ -16,14 +16,18 @@ import com.javaweb.repository.BuildingRepository;
 import com.javaweb.repository.RentAreaRopository;
 import com.javaweb.repository.UserRepository;
 import com.javaweb.service.BuildingService;
+import com.javaweb.utils.UploadFileUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.io.File;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Base64;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,6 +49,9 @@ public class BuildingServiceImpl implements BuildingService {
 
     @Autowired
     private AssignmentBuildingRepository assignmentBuildingRepository;
+
+    @Autowired
+    private UploadFileUtils uploadFileUtils;
 
     @Override
     public ResponseDTO listStaffs(Long buildingId) {
@@ -96,16 +103,36 @@ public class BuildingServiceImpl implements BuildingService {
             // Nếu không có ID, tạo mới tòa nhà
             buildingEntity = modelMapper.map(editBuildingDTO, BuildingEntity.class);
         }
+        saveThumbnail(editBuildingDTO, buildingEntity);
         buildingRepository.save(buildingEntity);
         // Xử lý khu vực cho thuê
         if (editBuildingDTO.getRentArea() != null && !editBuildingDTO.getRentArea().isEmpty()) {
-            String[] rentAreas = editBuildingDTO.getRentArea().split(",");
+            String[] rentAreas = editBuildingDTO.getRentArea().trim().split(",");
             for (String rentArea : rentAreas) {
                 RentAreaEntity rentAreaEntity = new RentAreaEntity();
                 rentAreaEntity.setValue(rentArea);
                 rentAreaEntity.setBuilding(buildingEntity);
                 rentAreaRepository.save(rentAreaEntity);
             }
+        }
+    }
+
+    private void saveThumbnail(EditBuildingDTO editBuildingDTO, BuildingEntity buildingEntity) {
+        String path = "/building/" + editBuildingDTO.getImageName();
+        if (null != editBuildingDTO.getImageBase64()) {
+            if (null != buildingEntity.getImage()) {
+                if (!path.equals(buildingEntity.getImage())) {
+                    File file = new File("C://home/office" + buildingEntity.getImage());
+                    file.delete();
+                }
+            }
+            String cleanBase64 = editBuildingDTO.getImageBase64().replaceAll("[^A-Za-z0-9+/=]", "");
+            while (cleanBase64.length() % 4 != 0) {
+                cleanBase64 += "=";
+            }
+            byte[] bytes = Base64.getDecoder().decode(cleanBase64);
+            uploadFileUtils.writeOrUpdate(path, bytes);
+            buildingEntity.setImage(path);
         }
     }
 
@@ -116,11 +143,10 @@ public class BuildingServiceImpl implements BuildingService {
         if (ids != null && !ids.isEmpty()) {
             ids.forEach(id -> {
                     rentAreaRepository.deleteByBuildingId(id);
-
+                    assignmentBuildingRepository.deleteByBuildingIdId(id);
                     buildingRepository.deleteById(id);
             });
         }
-        System.out.println("OK");
     }
 
     @Override
@@ -161,6 +187,11 @@ public class BuildingServiceImpl implements BuildingService {
         List<RentAreaEntity> rentAreaEntityList = rentAreaRepository.findByBuildingId(id);
         String rentResult = rentAreaEntityList.stream().map(it -> it.getValue().toString()).collect(Collectors.joining(", "));
         editBuildingDTO.setRentArea(rentResult);
+        editBuildingDTO.setImage(buildingEntity.getImage());
         return editBuildingDTO;
     }
 }
+
+
+
+
