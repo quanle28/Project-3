@@ -6,6 +6,7 @@ import com.javaweb.model.dto.BuildingDTO;
 import com.javaweb.model.dto.EditBuildingDTO;
 import com.javaweb.model.response.BuildingSearchResponse;
 import com.javaweb.repository.BuildingRepository;
+import com.javaweb.security.utils.SecurityUtils;
 import com.javaweb.service.BuildingService;
 import com.javaweb.service.impl.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,9 +33,15 @@ public class BuildingController {
     public ModelAndView buildingList(@ModelAttribute BuildingDTO buildingDTO, HttpServletRequest request) {
         ModelAndView mav = new ModelAndView("admin/building/list");
         mav.addObject("searchBuilding", buildingDTO);
-        List<BuildingSearchResponse> result = buildingService.findBuildingByRequest(buildingDTO);
+        if (SecurityUtils.getAuthorities().contains("ROLE_STAFF")){
+            Long staffId = SecurityUtils.getPrincipal().getId();
+            buildingDTO.setStaffId(staffId);
+            mav.addObject("searchResponses", buildingService.findBuildingByRequest(buildingDTO)); //where userid =
+        }
+        else { // manager
+            mav.addObject("searchResponses", buildingService.findBuildingByRequest(buildingDTO));
+        }
         // Da lay dlieu duoi db len
-        mav.addObject("searchResponses", result);
         mav.addObject("listStaffs", userService.getStaffs());
         mav.addObject("listDistricts", District.type());
         mav.addObject("listTypeCodes", TypeCode.type());

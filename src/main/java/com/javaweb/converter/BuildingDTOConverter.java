@@ -31,7 +31,7 @@ public class BuildingDTOConverter {
         return building;
     }
 
-    public List<RentAreaEntity> addRentAreaConverter(EditBuildingDTO editBuildingDTO, BuildingEntity buildingEntity){
+    public List<RentAreaEntity> setRentAreaConverter(EditBuildingDTO editBuildingDTO, BuildingEntity buildingEntity){
         // Xử lý khu vực cho thuê
         List<RentAreaEntity> areaEntityList = new ArrayList<>();
         if (editBuildingDTO.getRentArea() != null && !editBuildingDTO.getRentArea().isEmpty()) {

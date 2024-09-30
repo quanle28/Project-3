@@ -40,9 +40,6 @@ public class BuildingServiceImpl implements BuildingService {
     private ModelMapper modelMapper;
 
     @Autowired
-    private RentAreaRepository rentAreaRepository;
-
-    @Autowired
     private UploadFileUtils uploadFileUtils;
 
     @Override
@@ -91,7 +88,7 @@ public class BuildingServiceImpl implements BuildingService {
             // Nếu không có ID, tạo mới tòa nhà
             buildingEntity = modelMapper.map(editBuildingDTO, BuildingEntity.class);
         }
-        List<RentAreaEntity> areaEntityList = buildingDTOConverter.addRentAreaConverter(editBuildingDTO, buildingEntity);
+        List<RentAreaEntity> areaEntityList = buildingDTOConverter.setRentAreaConverter(editBuildingDTO, buildingEntity);
         buildingEntity.setRentarea(areaEntityList);
         saveThumbnail(editBuildingDTO, buildingEntity);
         buildingRepository.save(buildingEntity);

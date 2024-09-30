@@ -148,11 +148,13 @@
                                                     <form:input class="form-control" path="managerPhone"/>
                                                 </div>
                                                 <div class="col-xs-2">
-                                                    <label class="name">Nhân viên</label>
-                                                    <form:select class="form-control" path="staffId">
-                                                        <form:option value="">---Chọn Nhân Viên---</form:option>
-                                                        <form:options items="${listStaffs}" class="form-control"/>
-                                                    </form:select>
+                                                    <security:authorize access="hasRole('MANAGER')">
+                                                        <label class="name">Nhân viên</label>
+                                                        <form:select class="form-control" path="staffId">
+                                                            <form:option value="">---Chọn Nhân Viên---</form:option>
+                                                            <form:options items="${listStaffs}" class="form-control"/>
+                                                        </form:select>
+                                                    </security:authorize>
                                                 </div>
                                             </div>
                                         </div>
@@ -255,17 +257,19 @@
 
                                 <td>
                                     <div class="hidden-sm hidden-xs btn-group">
+                                    <security:authorize access="hasRole('MANAGER')">
                                         <button class="btn btn-xs btn-success" title="Giao tòa nhà" onclick="assignmentBuilding(${item.id})">
                                             <i class="ace-icon glyphicon glyphicon-list"></i>
                                         </button>
-
+                                    </security:authorize>
                                         <a href="/admin/building-edit-${item.id}" class="btn btn-xs btn-info" title="Sửa tòa nhà">
                                             <i class="ace-icon fa fa-pencil bigger-120"></i>
                                         </a>
-
+                                    <security:authorize access="hasRole('MANAGER')">
                                         <button class="btn btn-xs btn-danger" onclick="deleteBuilding(${item.id})" title="Xóa tòa nhà" id="deleteId-${item.id}">
                                             <i class="ace-icon fa fa-trash-o bigger-120"></i>
                                         </button>
+                                    </security:authorize>
                                     </div>
                                 </td>
                             </tr>
